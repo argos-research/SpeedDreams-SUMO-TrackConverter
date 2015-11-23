@@ -1,0 +1,10 @@
+<configuration>
+    <input>
+        <net-file value="coursechanger.net.xml"/>
+        <route-files value="coursechanger.rou.xml"/>
+    </input>
+    <time>
+        <begin value="0"/>
+        <end value="1000000000"/>
+    </time>
+</configuration>
