@@ -1,20 +1,28 @@
+#!/usr/bin/env python2
 import xmltodict
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import os
 from subprocess import call
 
-parser = argparse.ArgumentParser(description='convert SpeedDreams map format to SUMO')
+parser = argparse.ArgumentParser(description='convert SpeedDreams\' map format to SUMO\'s')
 parser.add_argument('inputFile', help='input file')
-parser.add_argument('outputFile', help='output file prefix (without extension)')
 parser.add_argument("--debug", help="enable debug output", action="store_true")
+parser.add_argument("--sumo", help="run netconvert and sumo afterwards", action="store_true")
 
 args = parser.parse_args()
 
 inputFile = args.inputFile
-filePrefix = args.outputFile
+outputPath = os.getcwd() + "/sumoBuild"
+filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0] 
+
+sumo = args.sumo
 debug = args.debug
+
+if not os.path.isdir(outputPath):
+    os.mkdir(outputPath)
 
 with open(inputFile) as fd:
 	trackXml = xmltodict.parse(fd.read())
@@ -177,7 +185,7 @@ def writeRoutes(filePrefix):
 	edgeIds = []
 	for k in range(1, len(nodes)-1 ):
 		edgeIds.append(str(k) + 'to' + str(k+1))
-	edgeIds.append(str(len(nodes)) + 'to1') # connect end to start
+	edgeIds.append(str(len(nodes)-1) + 'to1') # connect end to start
 
 	with open(filePrefix + '.rou.xml', 'w') as routesFile:
 		routesFile.write('<routes>\n')
@@ -189,12 +197,12 @@ def writeRoutes(filePrefix):
 def writeConf(filePrefix):
 	conf = ('<configuration>\n'
     '	<input>\n'
-    '		<net-file value="' + filePrefix + '.net.xml"/>\n'
-    '	    <route-files value="' + filePrefix + '.rou.xml"/>\n'
+    '	    <net-file value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.net.xml"/>\n'
+    '	    <route-files value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.rou.xml"/>\n'
     '	</input>\n'
     '	<time>\n'
     '	    <begin value="0"/>\n'
-    '	    <end value="1000000000"/>\n'
+    '	    <end value="1000000"/>\n'
     '	</time>\n'
 	'</configuration>\n')
 	with open(filePrefix + '.sumocfg', 'w') as fd:
@@ -219,7 +227,8 @@ writeNodes(filePrefix)
 writeEdges(filePrefix)
 writeRoutes(filePrefix)
 writeConf(filePrefix)
-netconvert(filePrefix)
-sumoGUI(filePrefix)
+if sumo:
+    netconvert(filePrefix)
+    sumoGUI(filePrefix)
 
 if debug: showPoints()
