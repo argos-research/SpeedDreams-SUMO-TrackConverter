@@ -1,20 +1,20 @@
 # SpeedDreams_SUMO_TrackConverter
 Converts SpeedDreamTracks to SUMO Tracks
 
+`trackparser.py` converts xml files in the form of [Track01.xml](exampleData/Track01.xml) to files readable by SUMO.
+The SUMO files are placed inside a new directory `sumoBuild/` ([example data](exampleData/sumoBuild/)).
 
-The courseconverter.py script is intended to convert a (Default-Dataset).csv file
-with a lot of (x,y) values to a SUMO track. These values were derived from a picture
-of the SpeedDreams track (for further details please visit the KIA4SM wiki).
-As these points are not correct enough another script is developed to get the xxx.nod.xml
-file out of the track xml file that is provided by SpeedDreams.
-The script (as of now 23.Nov.2015) commented the parts necessary for the first use case,
-because the second use case is more promissing, if you need them just uncomment the lines. (be aware of deletion in the future)
+To run the conversion you have to execute:
+```
+./trackparser.py Track01.xml
+```
 
-The courseconverter.py at the moment takes the coursechanger.nod.xml, as said above, and generates all necessary files e.g.
-courschanger.edg.xml, courschanger.<net/.rou>.xml and so on.
-A cycle course is generated and a car is set into the simulation. The cyclic route can be repeated with raising the parameter
-in the script. (be aware too many rounds or points in the route may crash the simulation/execution)
-Sumo/Sumo-gui is executed afterwards automaticly with the sumocfg file to show the simulation output.
+Furthermore this script is also able to automatically run `netconvert` and `sumo-gui` (use this if you have SUMO installed):
+```
+./trackparser.py --sumo Track01.xml
+```
 
-
-bb
+Finally it is also possible to show a simple overview of the generated map by using the `--debug` option:
+```
+./trackparser.py --debug Track01.xml
+```
