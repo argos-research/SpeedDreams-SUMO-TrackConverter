@@ -210,7 +210,7 @@ def writeConf(filePrefix):
 
 def netconvert(filePrefix):
 	# System call to use netconvert to bake nodes and edges to a net file
-	call(["netconvert", '--node-files=' + filePrefix + '.nod.xml', '--edge-files=' + filePrefix + '.edg.xml', '--output-file=' + filePrefix + '.net.xml'])
+	call(["netconvert", '--node-files=' + filePrefix + '.nod.xml', '--edge-files=' + filePrefix + '.edg.xml', '--output-file=' + outputPath + '/' + filePrefix + '.net.xml'])
 
 def sumoGUI(filePrefix):
 	# Call of Sumo gui with configuration
