@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 inputFile = args.inputFile
 outputPath = os.getcwd() + "/sumoBuild"
-filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0] 
+filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0]
 
 sumo = args.sumo
 debug = args.debug
@@ -219,7 +219,7 @@ def sumoGUI(filePrefix):
 def showPoints():
 	plt.scatter(*zip(*nodes))
 	plt.scatter(*zip(*helpNodes), color='r')
-	plt.plot(*zip(*nodes))
+	plt.plot(*zip(*nodes + [ nodes[0] ]))
 	plt.show()
 
 parseTrack()
