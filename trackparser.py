@@ -22,7 +22,7 @@ sumo = args.sumo
 debug = args.debug
 
 if not os.path.isdir(outputPath):
-    os.mkdir(outputPath)
+	os.mkdir(outputPath)
 
 with open(inputFile) as fd:
 	trackXml = xmltodict.parse(fd.read())
@@ -46,9 +46,18 @@ def parseSegment(segment):
 def parseSegmentAttributes(segment):
 	attrs = {}
 
-	for attr in segment['attstr']:
+	if type(segment['attstr']) is list:
+		for attr in segment['attstr']:
+			attrs[attr['@name']] = attr['@val']
+	else:
+		attr = segment['attstr']
 		attrs[attr['@name']] = attr['@val']
-	for attr in segment['attnum']:
+
+	if type(segment['attnum']) is list:
+		for attr in segment['attnum']:
+			attrs[attr['@name']] = attr['@val']
+	else:
+		attr = segment['attstr']
 		attrs[attr['@name']] = attr['@val']
 
 	return attrs
@@ -132,24 +141,32 @@ def parseStraight(attrs):
 	)
 	nodes.append(newNode)
 
+def findByName(maybeList, name):
+	result = None
+	elementList = None
+
+	if type(maybeList) is list:
+		elementList = maybeList
+	else:
+		elementList = [maybeList]
+
+	for element in elementList:
+		if element['@name'] == name:
+			result = element
+			break
+
+	return result
+
 
 def parseTrack():
-	track = None
-	for section in trackXml['params']['section']:
-		if section['@name'] == 'Main Track':
-			track = section
-			break
+	track = findByName(trackXml['params']['section'], 'Main Track')
 
 	if track is None:
 		print( "Couldn't find Main Track" )
 	else:
 		print( "Main Track found")
 
-	segments = None
-	for section in track['section']:
-		if section['@name'] == 'Track Segments':
-			segments = section
-			break
+	segments = findByName(track['section'], 'Track Segments')
 
 	if segments is None:
 		print( "Couldn't find Track Segments" )
@@ -196,14 +213,14 @@ def writeRoutes(filePrefix):
 
 def writeConf(filePrefix):
 	conf = ('<configuration>\n'
-    '	<input>\n'
-    '	    <net-file value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.net.xml"/>\n'
-    '	    <route-files value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.rou.xml"/>\n'
-    '	</input>\n'
-    '	<time>\n'
-    '	    <begin value="0"/>\n'
-    '	    <end value="1000000"/>\n'
-    '	</time>\n'
+	'	<input>\n'
+	'		<net-file value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.net.xml"/>\n'
+	'		<route-files value="' + os.path.splitext(os.path.basename(inputFile))[0] + '.rou.xml"/>\n'
+	'	</input>\n'
+	'	<time>\n'
+	'		<begin value="0"/>\n'
+	'		<end value="1000000"/>\n'
+	'	</time>\n'
 	'</configuration>\n')
 	with open(filePrefix + '.sumocfg', 'w') as fd:
 		fd.write(conf)
@@ -228,7 +245,7 @@ writeEdges(filePrefix)
 writeRoutes(filePrefix)
 writeConf(filePrefix)
 if sumo:
-    netconvert(filePrefix)
-    sumoGUI(filePrefix)
+	netconvert(filePrefix)
+	sumoGUI(filePrefix)
 
 if debug: showPoints()
