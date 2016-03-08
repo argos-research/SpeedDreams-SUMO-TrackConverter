@@ -18,6 +18,7 @@ the Free Software Foundation; either version 2 of the License, or
 ]>
 
 <params name="test" type="param" mode="mw">
+  <section name="Surfaces">&default-surfaces;</section>
   <section name="Header">
     <attstr name="name" val="Track v0.1" />
     <attstr name="category" val="kia4sm" />
@@ -141,7 +142,7 @@ the Free Software Foundation; either version 2 of the License, or
       <section name="curve 1">
         <attstr name="type" val="lft" />
         <attnum name="arc" unit="deg" val="57.0" />
-        <attnum name="radius" unit="m" val="200.0" />
+        <attnum name="radius" unit="m" val="201.0" />
         <attnum name="z start" unit="m" val="0.0" />
         <attnum name="z end" unit="m" val="0.0" />
         <attstr name="surface" val="asphalt2-lines" />
@@ -919,8 +920,7 @@ the Free Software Foundation; either version 2 of the License, or
       <section name="curve 12">
         <attstr name="type" val="rgt" />
         <attnum name="arc" unit="deg" val="76.0" />
-        <attnum name="radius" unit="m" val="300.0" />
-        <attnum name="end radius" unit="m" val="50.0" />
+        <attnum name="radius" unit="m" val="50.0" />
         <attnum name="z start" unit="m" val="0.0" />
         <attnum name="z end" unit="m" val="0.0" />
         <attstr name="surface" val="asphalt2-lines" />
@@ -1212,8 +1212,7 @@ the Free Software Foundation; either version 2 of the License, or
       <section name="curve 16">
         <attstr name="type" val="lft" />
         <attnum name="arc" unit="deg" val="180.0" />
-        <attnum name="radius" unit="m" val="97.0" />
-        <attnum name="end radius" unit="m" val="96.0" />
+        <attnum name="radius" unit="m" val="112.0" />
         <attnum name="z start" unit="m" val="0.0" />
         <attnum name="z end" unit="m" val="0.0" />
         <attstr name="surface" val="asphalt2-lines" />
@@ -1261,7 +1260,7 @@ the Free Software Foundation; either version 2 of the License, or
       <!--******************************-->
       <section name="straight 14">
         <attstr name="type" val="str" />
-        <attnum name="lg" unit="m" val="276.0" />
+        <attnum name="lg" unit="m" val="382.0" />
         <attnum name="z start" unit="m" val="0.0" />
         <attnum name="z end" unit="m" val="0.0" />
         <attstr name="surface" val="asphalt2-lines" />
