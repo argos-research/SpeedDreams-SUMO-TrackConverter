@@ -239,6 +239,14 @@ def showPoints():
 	plt.plot(*zip(*nodes + [ nodes[0] ]))
 	plt.show()
 
+def trackLength():
+	trackLength = 0;
+	for n in range( 0, len(nodes) ):
+		nextIndex = (n+1) % len(nodes)
+		edgeLength = np.sqrt( np.square(nodes[n][0] - nodes[nextIndex][0]) + np.square(nodes[n][1] - nodes[nextIndex][1]) )
+		trackLength += edgeLength
+	return trackLength
+
 parseTrack()
 writeNodes(filePrefix)
 writeEdges(filePrefix)
@@ -248,4 +256,6 @@ if sumo:
 	netconvert(filePrefix)
 	sumoGUI(filePrefix)
 
-if debug: showPoints()
+if debug:
+	print("Track Length: %d" % trackLength())
+	showPoints()
