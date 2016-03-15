@@ -186,16 +186,24 @@ def writeNodes(filePrefix):
 			id += 1
 		fd.write('</nodes>\n')
 
-def writeEdges(filePrefix):
+def writeEdges(filePrefix, width):
 	with open(filePrefix + '.edg.xml', 'w') as fd:
 		fd.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 		fd.write('<edges xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.sf.net/xsd/edges_file.xsd">\n')
 
 		for k in range(1, len(nodes)-1 ):
-			fd.write('<edge from="' + str(k) +'" id="' + str(k) + 'to' + str(k+1) + '" to="' + str(k+1) + '" width="6.0"/>\n')
+			edgeFrom = str(k)
+			edgeTo = str(k+1)
+			edgeId = str(k) + 'to' + str(k+1)
+			edgeWidth = width
+			fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
 
 		# connect end to start
-		fd.write('<edge from="' + str(k+1) +'" id="' + str(k+1) + 'to' + str(1) + '" to="' + str(1) + '" width="6.0"/>\n')
+		edgeFrom = str(k+1)
+		edgeTo = str(1)
+		edgeId = str(k+1) + 'to' + str(1)
+		edgeWidth = width
+		fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
 		fd.write('</edges>\n')
 
 def writeRoutes(filePrefix):
@@ -247,9 +255,26 @@ def trackLength():
 		trackLength += edgeLength
 	return trackLength
 
+def trackWidth():
+	track = findByName(trackXml['params']['section'], 'Main Track')
+
+	if type(track['attnum']) is list:
+		for attr in track['attnum']:
+			print(attr['@name'] + ' ' + attr['@val'])
+			if attr['@name'] == 'width':
+				return float(attr['@val'])
+	else:
+		attr = segment['attnum']
+		if attr['@name'] is 'width':
+			return float(attr['@val'])
+
+	# default value
+	print('default width: 5m')
+	return 5
+
 parseTrack()
 writeNodes(filePrefix)
-writeEdges(filePrefix)
+writeEdges(filePrefix, trackWidth())
 writeRoutes(filePrefix)
 writeConf(filePrefix)
 if sumo:
