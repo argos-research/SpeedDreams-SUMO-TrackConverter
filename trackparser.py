@@ -192,10 +192,10 @@ def writeEdges(filePrefix):
 		fd.write('<edges xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.sf.net/xsd/edges_file.xsd">\n')
 
 		for k in range(1, len(nodes)-1 ):
-			fd.write('<edge from="' + str(k) +'" id="' + str(k) + 'to' + str(k+1) + '" to="' + str(k+1) + '"/>\n')
+			fd.write('<edge from="' + str(k) +'" id="' + str(k) + 'to' + str(k+1) + '" to="' + str(k+1) + '" width="6.0"/>\n')
 
 		# connect end to start
-		fd.write('<edge from="' + str(k+1) +'" id="' + str(k+1) + 'to' + str(1) + '" to="' + str(1) + '"/>\n')
+		fd.write('<edge from="' + str(k+1) +'" id="' + str(k+1) + 'to' + str(1) + '" to="' + str(1) + '" width="6.0"/>\n')
 		fd.write('</edges>\n')
 
 def writeRoutes(filePrefix):
