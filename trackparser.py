@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(description='convert SpeedDreams\' map format t
 parser.add_argument('inputFile', help='input file')
 parser.add_argument("--debug", help="enable debug output", action="store_true")
 parser.add_argument("--sumo", help="run netconvert and sumo afterwards", action="store_true")
+parser.add_argument("-d", "--degree", help="curve step size in degree", type=int, default=5)
 
 args = parser.parse_args()
 
@@ -21,13 +22,13 @@ filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0]
 sumo = args.sumo
 debug = args.debug
 
+degreeStepSize = args.degree
+
 if not os.path.isdir(outputPath):
 	os.mkdir(outputPath)
 
 with open(inputFile) as fd:
 	trackXml = xmltodict.parse(fd.read())
-
-degreeStepSize = 10
 
 nodes = [ (0,0) ]
 helpNodes = []
