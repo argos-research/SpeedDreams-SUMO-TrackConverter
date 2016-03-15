@@ -10,7 +10,8 @@ from subprocess import call
 parser = argparse.ArgumentParser(description='convert SpeedDreams\' map format to SUMO\'s')
 parser.add_argument('inputFile', help='input file')
 parser.add_argument("--debug", help="enable debug output", action="store_true")
-parser.add_argument("--sumo", help="run netconvert and sumo afterwards", action="store_true")
+parser.add_argument("--sumo", help="run sumo (optional: path to sumo)", nargs="?", const="sumo-gui")
+parser.add_argument("--net", help="run netconvert (optional: path to netconvert)", nargs="?", const="netconvert")
 parser.add_argument("-d", "--degree", help="curve step size in degree", type=int, default=5)
 
 args = parser.parse_args()
@@ -19,7 +20,8 @@ inputFile = args.inputFile
 outputPath = os.getcwd() + "/sumoBuild"
 filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0]
 
-sumo = args.sumo
+sumoCommand = args.sumo
+netconvertCommand = args.net
 debug = args.debug
 
 degreeStepSize = args.degree
@@ -234,13 +236,13 @@ def writeConf(filePrefix):
 	with open(filePrefix + '.sumocfg', 'w') as fd:
 		fd.write(conf)
 
-def netconvert(filePrefix):
+def netconvert(filePrefix, netconvertCommand):
 	# System call to use netconvert to bake nodes and edges to a net file
-	call(["netconvert", '--node-files=' + filePrefix + '.nod.xml', '--edge-files=' + filePrefix + '.edg.xml', '--output-file=' + outputPath + '/' + filePrefix + '.net.xml'])
+	call([netconvertCommand, '--node-files=' + filePrefix + '.nod.xml', '--edge-files=' + filePrefix + '.edg.xml', '--output-file=' + outputPath + '/' + filePrefix + '.net.xml'])
 
-def sumoGUI(filePrefix):
+def sumo(filePrefix, sumoCommand):
 	# Call of Sumo gui with configuration
-	call(['sumo-gui', '-c', filePrefix + '.sumocfg'])
+	call([sumoCommand, '-c', filePrefix + '.sumocfg'])
 
 def showPoints():
 	plt.scatter(*zip(*nodes))
@@ -278,9 +280,11 @@ writeNodes(filePrefix)
 writeEdges(filePrefix, trackWidth())
 writeRoutes(filePrefix)
 writeConf(filePrefix)
-if sumo:
-	netconvert(filePrefix)
-	sumoGUI(filePrefix)
+
+if netconvertCommand:
+	netconvert(filePrefix, netconvertCommand)
+if sumoCommand:
+	sumo(filePrefix, sumoCommand)
 
 if debug:
 	print("Track Length: %d" % trackLength())
