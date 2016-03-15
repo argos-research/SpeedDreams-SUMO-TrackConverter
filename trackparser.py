@@ -5,7 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
+import logging
 from subprocess import call
+
+logger = logging.getLogger('trackparser')
 
 parser = argparse.ArgumentParser(description='convert SpeedDreams\' map format to SUMO\'s')
 parser.add_argument('inputFile', help='input file')
@@ -13,8 +16,14 @@ parser.add_argument("--debug", help="enable debug output", action="store_true")
 parser.add_argument("--sumo", help="run sumo (optional: path to sumo)", nargs="?", const="sumo-gui")
 parser.add_argument("--net", help="run netconvert (optional: path to netconvert)", nargs="?", const="netconvert")
 parser.add_argument("-d", "--degree", help="curve step size in degree", type=int, default=5)
+parser.add_argument("-v", "--verbose", dest="count_verbose", default=0, action="count", help="increase verbosity")
+parser.add_argument("-q", "--quiet", dest="count_quiet", default=0, action="count", help="decrease verbosity")
 
 args = parser.parse_args()
+
+LOGLEVELS = (logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG)
+loglevel = LOGLEVELS[min(1 + args.count_verbose - args.count_quiet, len(LOGLEVELS)-1)]
+logging.basicConfig(level=loglevel)
 
 inputFile = args.inputFile
 outputPath = os.getcwd() + "/sumoBuild"
@@ -37,13 +46,14 @@ helpNodes = []
 directionDegree = 0
 
 def parseSegment(segment):
+	logger = logging.getLogger('trackparser')
 	attrs = parseSegmentAttributes(segment)
 	if attrs['type'] in ('lft', 'rgt'):
 		parseCurve( parseSegmentAttributes(segment) )
 	elif attrs['type'] == 'str':
 		parseStraight( parseSegmentAttributes(segment) )
 	else:
-		print('I don\'t understand the segment type "%s"' % attrs['type'])
+		logger.warn('I don\'t understand the segment type "%s"' % attrs['type'])
 
 
 def parseSegmentAttributes(segment):
@@ -68,6 +78,7 @@ def parseSegmentAttributes(segment):
 
 def parseCurve(attrs):
 	global directionDegree
+	logger = logging.getLogger('trackparser')
 	center = None
 	radius = float(attrs['radius'])
 	# take 'end radius' into account (whatever this is)
@@ -100,9 +111,9 @@ def parseCurve(attrs):
 		# rotate right
 		directionDegree = (directionDegree - arc) % 360
 	else:
-		print('Wrong direction')
+		logger.warn('Wrong direction')
 
-	if debug: print('Curve: center %s, radius %s, arc %s' % (center, radius, arc))
+	logger.debug('Curve: center %s, radius %s, arc %s' % (center, radius, arc))
 	helpNodes.append(center)
 
 	curDegree = degreeStepSize
@@ -122,22 +133,14 @@ def parseCurve(attrs):
 	)
 	nodes.append(newNode)
 
-	# rotate unit vector
-	#rot=np.array([
-	#	[ np.cos(radArc), -np.sin(radArc)],
-	#	[ np.sin(radArc), -np.cos(radArc)]
-	#])
-	#b=np.array(*lastDirection)
-	#print(rot.dot(b))
-
 
 def parseStraight(attrs):
-	if debug: print('Straight: length %s' % (float(attrs['lg']),))
+	logger = logging.getLogger('trackparser')
+	logger.debug('Straight: length %s' % (float(attrs['lg']),))
 	lastDirection = (
 		np.cos(np.radians(directionDegree)),
 		np.sin(np.radians(directionDegree))
 	)
-	print(lastDirection)
 	newNode = (
 		nodes[-1][0] + lastDirection[0] * float(attrs['lg']),
 		nodes[-1][1] + lastDirection[1] * float(attrs['lg'])
@@ -162,19 +165,22 @@ def findByName(maybeList, name):
 
 
 def parseTrack():
+	logger = logging.getLogger('trackparser')
 	track = findByName(trackXml['params']['section'], 'Main Track')
 
 	if track is None:
-		print( "Couldn't find Main Track" )
+		logger.error( "Couldn't find Main Track" )
+		sys.exit(1)
 	else:
-		print( "Main Track found")
+		logger.info( "Main Track found")
 
 	segments = findByName(track['section'], 'Track Segments')
 
 	if segments is None:
-		print( "Couldn't find Track Segments" )
+		logger.error( "Couldn't find Track Segments" )
+		sys.exit(1)
 	else:
-		print( "Track Segments found")
+		logger.info( "Track Segments found")
 
 	for segment in segments['section']:
 		parseSegment(segment)
@@ -263,7 +269,6 @@ def trackWidth():
 
 	if type(track['attnum']) is list:
 		for attr in track['attnum']:
-			print(attr['@name'] + ' ' + attr['@val'])
 			if attr['@name'] == 'width':
 				return float(attr['@val'])
 	else:
@@ -272,7 +277,7 @@ def trackWidth():
 			return float(attr['@val'])
 
 	# default value
-	print('default width: 5m')
+	logger.info('default width: 5m')
 	return 5
 
 parseTrack()
@@ -286,6 +291,6 @@ if netconvertCommand:
 if sumoCommand:
 	sumo(filePrefix, sumoCommand)
 
-if debug:
-	print("Track Length: %d" % trackLength())
+logger.info("Track Length: %d" % trackLength())
+if logger.isEnabledFor(logging.DEBUG):
 	showPoints()
