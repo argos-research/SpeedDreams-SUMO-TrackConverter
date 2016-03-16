@@ -205,14 +205,16 @@ def writeEdges(filePrefix, width):
 			edgeTo = str(k+1)
 			edgeId = str(k) + 'to' + str(k+1)
 			edgeWidth = width
-			fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
+			edgeLength = np.sqrt( np.square(nodes[k][0] - nodes[k+1][0]) + np.square(nodes[k][1] - nodes[k+1][1]) )
+			fd.write('<edge from="{}" id="{}" to="{}" length="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeLength, edgeWidth))
 
 		# connect end to start
 		edgeFrom = str(k+1)
 		edgeTo = str(1)
 		edgeId = str(k+1) + 'to' + str(1)
 		edgeWidth = width
-		fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
+		edgeLength = np.sqrt( np.square(nodes[k+1][0] - nodes[1][0]) + np.square(nodes[k+1][1] - nodes[1][1]) )
+		fd.write('<edge from="{}" id="{}" to="{}" length="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeLength, edgeWidth))
 		fd.write('</edges>\n')
 
 def writeRoutes(filePrefix):
