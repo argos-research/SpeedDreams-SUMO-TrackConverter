@@ -188,7 +188,7 @@ def parseTrack():
 
 def writeNodes(filePrefix):
 	with open(filePrefix + '.nod.xml', 'w') as fd:
-		id = 1
+		id = 0
 		fd.write('<nodes>\n')
 		for node in nodes:
 			fd.write('<node id="%s" x="%s" y="%s"/>\n' % (id, node[0], node[1]))
@@ -200,26 +200,21 @@ def writeEdges(filePrefix, width):
 		fd.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 		fd.write('<edges xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.sf.net/xsd/edges_file.xsd">\n')
 
-		for k in range(1, len(nodes)-1 ):
+		for k in range( len(nodes) ):
+			nextK = (k + 1) % len(nodes)
 			edgeFrom = str(k)
-			edgeTo = str(k+1)
-			edgeId = str(k) + 'to' + str(k+1)
+			edgeTo = str(nextK)
+			edgeId = str(k) + 'to' + str(nextK)
 			edgeWidth = width
-			fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
+			edgeLength = np.sqrt( np.square(nodes[k][0] - nodes[nextK][0]) + np.square(nodes[k][1] - nodes[nextK][1]) )
+			fd.write('<edge from="{}" id="{}" to="{}" length="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeLength, edgeWidth))
 
-		# connect end to start
-		edgeFrom = str(k+1)
-		edgeTo = str(1)
-		edgeId = str(k+1) + 'to' + str(1)
-		edgeWidth = width
-		fd.write('<edge from="{}" id="{}" to="{}" width="{}"/>\n'.format(edgeFrom, edgeId, edgeTo, edgeWidth))
 		fd.write('</edges>\n')
 
 def writeRoutes(filePrefix):
 	edgeIds = []
-	for k in range(1, len(nodes)-1 ):
-		edgeIds.append(str(k) + 'to' + str(k+1))
-	edgeIds.append(str(len(nodes)-1) + 'to1') # connect end to start
+	for k in range( len(nodes) ):
+		edgeIds.append(str(k) + 'to' + str( (k+1) % len(nodes)))
 
 	with open(filePrefix + '.rou.xml', 'w') as routesFile:
 		routesFile.write('<routes>\n')
@@ -258,7 +253,7 @@ def showPoints():
 
 def trackLength():
 	trackLength = 0;
-	for n in range( 0, len(nodes) ):
+	for n in range( len(nodes) ):
 		nextIndex = (n+1) % len(nodes)
 		edgeLength = np.sqrt( np.square(nodes[n][0] - nodes[nextIndex][0]) + np.square(nodes[n][1] - nodes[nextIndex][1]) )
 		trackLength += edgeLength
