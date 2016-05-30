@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 import logging
+import collections
 from subprocess import call
+
+Point = collections.namedtuple('Point', 'x y')
 
 logger = logging.getLogger('trackparser')
 
@@ -45,6 +48,51 @@ nodes = [ (0,0) ]
 helpNodes = []
 directionDegree = 0
 
+'''
+flip horizontally along x coordinate
+'''
+def flipHorizontally(point, x):
+	newX = 2*x - point.x
+	return Point(newX, point.y)
+
+'''
+rotate point around pivot counter-clockwise
+'''
+def rotatePoint(pivot, point, angle):
+	s = np.sin(np.deg2rad(angle))
+	c = np.cos(np.deg2rad(angle))
+
+	# translate point back to origin:
+	point = Point(
+		point.x - pivot.x,
+		point.y - pivot.y
+	)
+
+	# rotate point
+	xnew = point.x * c - point.y * s
+	ynew = point.x * s + point.y * c
+
+	# translate point back:
+	return Point(
+		xnew + pivot.x,
+		ynew + pivot.y
+	)
+
+
+'''
+get points on an ellipse arc
+'''
+def sampleEllipse(origin, radiusX, radiusY, angle, sampleSize):
+	sampleList = []
+	for step in np.linspace(0, angle, num=sampleSize, endpoint=True):
+		point = Point(
+			origin.x + radiusX * np.cos(np.deg2rad(step)),
+			origin.y + radiusY * np.sin(np.deg2rad(step))
+		)
+		sampleList.append(point)
+
+	return sampleList
+
 def parseSegment(segment):
 	logger = logging.getLogger('trackparser')
 	attrs = parseSegmentAttributes(segment)
@@ -70,7 +118,7 @@ def parseSegmentAttributes(segment):
 		for attr in segment['attnum']:
 			attrs[attr['@name']] = attr['@val']
 	else:
-		attr = segment['attstr']
+		attr = segment['attnum']
 		attrs[attr['@name']] = attr['@val']
 
 	return attrs
@@ -80,14 +128,16 @@ def parseCurve(attrs):
 	global directionDegree
 	logger = logging.getLogger('trackparser')
 	center = None
-	radius = float(attrs['radius'])
-	# take 'end radius' into account (whatever this is)
+
+	radiusX = float(attrs['radius'])
+
 	if(attrs.has_key('end radius')):
-		radius = radius + float(attrs['end radius'])
-		radius /= 2
+		radiusY = float(attrs['end radius'])
+	else:
+		radiusY = radiusX
 
 	arc = float(attrs['arc'])
-	radArc = np.radians(arc)
+
 	startPoint = nodes[-1]
 	rotationDirection = 1 if attrs['type'] == 'lft' else -1;
 	lastDirection = (
@@ -97,41 +147,38 @@ def parseCurve(attrs):
 
 
 	if attrs['type'] == 'lft':
-		center = (
-			startPoint[0] - lastDirection[1] * radius,
-			startPoint[1] + lastDirection[0] * radius
+		center = Point(
+			startPoint[0] - lastDirection[1] * radiusX,
+			startPoint[1] + lastDirection[0] * radiusY
 		)
-		# rotate left
-		directionDegree = (directionDegree + arc) % 360
 	elif attrs['type'] == 'rgt':
-		center = (
-			startPoint[0] + lastDirection[1] * radius,
-			startPoint[1] - lastDirection[0] * radius
+		center = Point(
+			startPoint[0] + lastDirection[1] * radiusX,
+			startPoint[1] - lastDirection[0] * radiusY
 		)
-		# rotate right
-		directionDegree = (directionDegree - arc) % 360
 	else:
 		logger.warn('Wrong direction')
 
-	logger.debug('Curve: center %s, radius %s, arc %s' % (center, radius, arc))
+
+	logger.debug('Curve: center %s, radius %s, %s, arc %s' % (center, radiusX, radiusY, arc))
 	helpNodes.append(center)
 
-	curDegree = degreeStepSize
-	while curDegree < arc:
-		curRad = math.radians(curDegree)
-		newNode = (
-			center[0] + ( startPoint[0] - center[0] ) * np.cos(rotationDirection * curRad) + ( center[1] - startPoint[1] ) * np.sin(rotationDirection * curRad),
-			center[1] + ( startPoint[1] - center[1] ) * np.cos(rotationDirection * curRad) + ( startPoint[0] - center[0] ) * np.sin(rotationDirection * curRad)
-		)
-		nodes.append(newNode)
-		curDegree += degreeStepSize
 
-	# add end node
-	newNode = (
-		center[0] + ( startPoint[0] - center[0] ) * np.cos(rotationDirection * radArc) + ( center[1] - startPoint[1] ) * np.sin(rotationDirection * radArc),
-		center[1] + ( startPoint[1] - center[1] ) * np.cos(rotationDirection * radArc) + ( startPoint[0] - center[0] ) * np.sin(rotationDirection * radArc)
-	)
-	nodes.append(newNode)
+	curveNodes = sampleEllipse(center, radiusX, radiusY, arc, degreeStepSize)
+
+	if attrs['type'] == 'rgt':
+		curveNodes = [ flipHorizontally(node, center.x) for node in curveNodes ]
+
+	curveNodes = [ rotatePoint(center, node, directionDegree-90) for node in curveNodes ]
+
+	if attrs['type'] == 'lft':
+		# rotate left
+		directionDegree = (directionDegree + arc) % 360
+	elif attrs['type'] == 'rgt':
+		# rotate right
+		directionDegree = (directionDegree - arc) % 360
+
+	nodes.extend(curveNodes)
 
 
 def parseStraight(attrs):
@@ -248,6 +295,7 @@ def sumo(filePrefix, sumoCommand):
 def showPoints():
 	plt.scatter(*zip(*nodes))
 	plt.scatter(*zip(*helpNodes), color='r')
+	plt.scatter(*nodes[0], color='g')
 	plt.plot(*zip(*nodes + [ nodes[0] ]))
 	plt.show()
 
@@ -275,17 +323,40 @@ def trackWidth():
 	logger.info('default width: 5m')
 	return 5
 
-parseTrack()
-writeNodes(filePrefix)
-writeEdges(filePrefix, trackWidth())
-writeRoutes(filePrefix)
-writeConf(filePrefix)
+def main():
+	parseTrack()
+	writeNodes(filePrefix)
+	writeEdges(filePrefix, trackWidth())
+	writeRoutes(filePrefix)
+	writeConf(filePrefix)
 
-if netconvertCommand:
-	netconvert(filePrefix, netconvertCommand)
-if sumoCommand:
-	sumo(filePrefix, sumoCommand)
+	if netconvertCommand:
+		netconvert(filePrefix, netconvertCommand)
+	if sumoCommand:
+		sumo(filePrefix, sumoCommand)
 
-logger.info("Track Length: %d" % trackLength())
-if logger.isEnabledFor(logging.DEBUG):
-	showPoints()
+	logger.info("Track Length: %d" % trackLength())
+	if logger.isEnabledFor(logging.DEBUG):
+		showPoints()
+
+def test():
+	origin = Point(0,0)
+	radiusX = 2
+	radiusY = 5
+	angle = 90
+	stepSize = 20
+	rotation = 0
+	points = sampleEllipse(origin, radiusX, radiusY, angle, stepSize)
+	print(points)
+
+	rotatedPoints = []
+	for point in points:
+		rotatedPoints.append(rotatePoint(origin, point, rotation))
+
+	plt.scatter(*zip(*rotatedPoints))
+	plt.plot(*zip(*rotatedPoints))
+	plt.show()
+
+
+if __name__ == '__main__':
+	main()
