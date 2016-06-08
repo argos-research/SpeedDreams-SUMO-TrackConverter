@@ -232,6 +232,9 @@ def parseTrack():
 	for segment in segments['section']:
 		parseSegment(segment)
 
+	# remove last node to create a better connection to the start node
+	nodes = nodes[:-1]
+
 
 def writeNodes(filePrefix):
 	with open(filePrefix + '.nod.xml', 'w') as fd:
