@@ -84,7 +84,7 @@ get points on an ellipse arc
 '''
 def sampleEllipse(origin, radiusX, radiusY, angle, sampleSize):
 	sampleList = []
-	for step in np.linspace(0, angle, num=sampleSize, endpoint=True):
+	for step in np.linspace(1, angle, num=sampleSize, endpoint=True):
 		point = Point(
 			origin.x + radiusX * np.cos(np.deg2rad(step)),
 			origin.y + radiusY * np.sin(np.deg2rad(step))
@@ -297,6 +297,10 @@ def showPoints():
 	plt.scatter(*zip(*helpNodes), color='r')
 	plt.scatter(*nodes[0], color='g')
 	plt.plot(*zip(*nodes + [ nodes[0] ]))
+
+	for i, node in enumerate(nodes):
+		plt.annotate(xy=node, s=str(i))
+
 	plt.show()
 
 def trackLength():
