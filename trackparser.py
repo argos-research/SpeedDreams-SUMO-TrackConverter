@@ -346,24 +346,6 @@ def main():
 	if logger.isEnabledFor(logging.DEBUG):
 		showPoints()
 
-def test():
-	origin = Point(0,0)
-	radiusX = 2
-	radiusY = 5
-	angle = 90
-	stepSize = 20
-	rotation = 0
-	points = sampleEllipse(origin, radiusX, radiusY, angle, stepSize)
-	print(points)
-
-	rotatedPoints = []
-	for point in points:
-		rotatedPoints.append(rotatePoint(origin, point, rotation))
-
-	plt.scatter(*zip(*rotatedPoints))
-	plt.plot(*zip(*rotatedPoints))
-	plt.show()
-
 
 if __name__ == '__main__':
 	main()
