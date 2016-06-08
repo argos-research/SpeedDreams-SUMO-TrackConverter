@@ -267,7 +267,7 @@ def writeRoutes(filePrefix):
 		routesFile.write('<routes>\n')
 		routesFile.write('<vType accel="0.5" decel="5.0" id="Car" length="2.0" maxSpeed="1.0" sigma="0.0" />\n')
 		routesFile.write('<route id="route0" edges="' + ' '.join(edgeIds) + '" />\n')
-		routesFile.write('<vehicle depart="1" id="veh0" route="route0" type="Car" />\n')
+		routesFile.write('<vehicle depart="0" id="veh0" route="route0" type="Car" />\n')
 		routesFile.write('</routes>\n')
 
 def writeConf(filePrefix):
