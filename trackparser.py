@@ -214,6 +214,7 @@ def findByName(maybeList, name):
 def parseTrack():
 	logger = logging.getLogger('trackparser')
 	track = findByName(trackXml['params']['section'], 'Main Track')
+	global nodes
 
 	if track is None:
 		logger.error( "Couldn't find Main Track" )
