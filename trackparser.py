@@ -214,6 +214,7 @@ def findByName(maybeList, name):
 def parseTrack():
 	logger = logging.getLogger('trackparser')
 	track = findByName(trackXml['params']['section'], 'Main Track')
+	global nodes
 
 	if track is None:
 		logger.error( "Couldn't find Main Track" )
@@ -231,6 +232,9 @@ def parseTrack():
 
 	for segment in segments['section']:
 		parseSegment(segment)
+
+	# remove last node to create a better connection to the start node
+	nodes = nodes[:-1]
 
 
 def writeNodes(filePrefix):
@@ -267,7 +271,7 @@ def writeRoutes(filePrefix):
 		routesFile.write('<routes>\n')
 		routesFile.write('<vType accel="0.5" decel="5.0" id="Car" length="2.0" maxSpeed="1.0" sigma="0.0" />\n')
 		routesFile.write('<route id="route0" edges="' + ' '.join(edgeIds) + '" />\n')
-		routesFile.write('<vehicle depart="1" id="veh0" route="route0" type="Car" />\n')
+		routesFile.write('<vehicle depart="0" id="veh0" route="route0" type="Car" />\n')
 		routesFile.write('</routes>\n')
 
 def writeConf(filePrefix):
@@ -342,24 +346,6 @@ def main():
 	logger.info("Track Length: %d" % trackLength())
 	if logger.isEnabledFor(logging.DEBUG):
 		showPoints()
-
-def test():
-	origin = Point(0,0)
-	radiusX = 2
-	radiusY = 5
-	angle = 90
-	stepSize = 20
-	rotation = 0
-	points = sampleEllipse(origin, radiusX, radiusY, angle, stepSize)
-	print(points)
-
-	rotatedPoints = []
-	for point in points:
-		rotatedPoints.append(rotatePoint(origin, point, rotation))
-
-	plt.scatter(*zip(*rotatedPoints))
-	plt.plot(*zip(*rotatedPoints))
-	plt.show()
 
 
 if __name__ == '__main__':
