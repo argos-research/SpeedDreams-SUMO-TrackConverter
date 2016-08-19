@@ -7,6 +7,7 @@ import argparse
 import os
 import logging
 import collections
+import sys
 from subprocess import call
 
 Point = collections.namedtuple('Point', 'x y')
