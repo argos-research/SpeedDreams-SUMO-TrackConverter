@@ -9,6 +9,7 @@ import logging
 import collections
 import sys
 from subprocess import call
+import csv
 
 Point = collections.namedtuple('Point', 'x y')
 
@@ -42,10 +43,10 @@ degreeStepSize = args.degree
 if not os.path.isdir(outputPath):
 	os.mkdir(outputPath)
 
-with open(inputFile) as fd:
-	trackXml = xmltodict.parse(fd.read())
+#with open(inputFile) as fd:
+#	trackXml = xmltodict.parse(fd.read())
 
-nodes = [ (0,0) ]
+nodes = []
 helpNodes = []
 directionDegree = 0
 
@@ -299,7 +300,7 @@ def sumo(filePrefix, sumoCommand):
 
 def showPoints():
 	plt.scatter(*zip(*nodes))
-	plt.scatter(*zip(*helpNodes), color='r')
+	#plt.scatter(*zip(*helpNodes), color='r')
 	plt.scatter(*nodes[0], color='g')
 	plt.plot(*zip(*nodes + [ nodes[0] ]))
 
@@ -317,6 +318,7 @@ def trackLength():
 	return trackLength
 
 def trackWidth():
+	return 5
 	track = findByName(trackXml['params']['section'], 'Main Track')
 
 	if type(track['attnum']) is list:
@@ -332,8 +334,17 @@ def trackWidth():
 	logger.info('default width: 5m')
 	return 5
 
+def import_csv():
+	with open(inputFile) as csvfile:
+		trackreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+		for row in trackreader:
+			coord = np.fromstring(' '.join(row), dtype="float64", sep=" ")
+			x = (coord[0]+coord[2])/2
+			y = (coord[1]+coord[3])/2
+			nodes.append( (x,y) )
+
 def main():
-	parseTrack()
+	import_csv()
 	writeNodes(filePrefix)
 	writeEdges(filePrefix, trackWidth())
 	writeRoutes(filePrefix)
