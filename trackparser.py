@@ -17,9 +17,9 @@ logger = logging.getLogger('trackparser')
 
 parser = argparse.ArgumentParser(description='convert SpeedDreams\' map format to SUMO\'s')
 parser.add_argument('inputFile', help='input file')
-parser.add_argument("--debug", help="enable debug output", action="store_true")
-parser.add_argument("--sumo", help="run sumo (optional: path to sumo)", nargs="?", const="sumo-gui")
-parser.add_argument("--net", help="run netconvert (optional: path to netconvert)", nargs="?", const="netconvert")
+parser.add_argument("-w", "--width", help='track width', type=int, default=5)
+parser.add_argument("-s", "--sumo", help="run sumo (optional: path to sumo)", nargs="?", const="sumo-gui")
+parser.add_argument("-n", "--net", help="run netconvert (optional: path to netconvert)", nargs="?", const="netconvert")
 parser.add_argument("-d", "--degree", help="curve step size in degree", type=int, default=5)
 parser.add_argument("-v", "--verbose", dest="count_verbose", default=0, action="count", help="increase verbosity")
 parser.add_argument("-q", "--quiet", dest="count_quiet", default=0, action="count", help="decrease verbosity")
@@ -36,15 +36,12 @@ filePrefix = outputPath + "/" + os.path.splitext(os.path.basename(inputFile))[0]
 
 sumoCommand = args.sumo
 netconvertCommand = args.net
-debug = args.debug
+track_width = args.width
 
 degreeStepSize = args.degree
 
 if not os.path.isdir(outputPath):
 	os.mkdir(outputPath)
-
-#with open(inputFile) as fd:
-#	trackXml = xmltodict.parse(fd.read())
 
 nodes = []
 helpNodes = []
@@ -317,23 +314,6 @@ def trackLength():
 		trackLength += edgeLength
 	return trackLength
 
-def trackWidth():
-	return 5
-	track = findByName(trackXml['params']['section'], 'Main Track')
-
-	if type(track['attnum']) is list:
-		for attr in track['attnum']:
-			if attr['@name'] == 'width':
-				return float(attr['@val'])
-	else:
-		attr = segment['attnum']
-		if attr['@name'] is 'width':
-			return float(attr['@val'])
-
-	# default value
-	logger.info('default width: 5m')
-	return 5
-
 def import_csv():
 	with open(inputFile) as csvfile:
 		trackreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -346,7 +326,7 @@ def import_csv():
 def main():
 	import_csv()
 	writeNodes(filePrefix)
-	writeEdges(filePrefix, trackWidth())
+	writeEdges(filePrefix, track_width)
 	writeRoutes(filePrefix)
 	writeConf(filePrefix)
 
