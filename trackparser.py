@@ -1,6 +1,4 @@
 #!/usr/bin/env python2
-import xmltodict
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -10,8 +8,6 @@ import collections
 import sys
 from subprocess import call
 import csv
-
-Point = collections.namedtuple('Point', 'x y')
 
 logger = logging.getLogger('trackparser')
 
@@ -46,195 +42,6 @@ if not os.path.isdir(outputPath):
 nodes = []
 helpNodes = []
 directionDegree = 0
-
-'''
-flip horizontally along x coordinate
-'''
-def flipHorizontally(point, x):
-	newX = 2*x - point.x
-	return Point(newX, point.y)
-
-'''
-rotate point around pivot counter-clockwise
-'''
-def rotatePoint(pivot, point, angle):
-	s = np.sin(np.deg2rad(angle))
-	c = np.cos(np.deg2rad(angle))
-
-	# translate point back to origin:
-	point = Point(
-		point.x - pivot.x,
-		point.y - pivot.y
-	)
-
-	# rotate point
-	xnew = point.x * c - point.y * s
-	ynew = point.x * s + point.y * c
-
-	# translate point back:
-	return Point(
-		xnew + pivot.x,
-		ynew + pivot.y
-	)
-
-
-'''
-get points on an ellipse arc
-'''
-def sampleEllipse(origin, radiusX, radiusY, angle, sampleSize):
-	sampleList = []
-	for step in np.linspace(1, angle, num=sampleSize, endpoint=True):
-		point = Point(
-			origin.x + radiusX * np.cos(np.deg2rad(step)),
-			origin.y + radiusY * np.sin(np.deg2rad(step))
-		)
-		sampleList.append(point)
-
-	return sampleList
-
-def parseSegment(segment):
-	logger = logging.getLogger('trackparser')
-	attrs = parseSegmentAttributes(segment)
-	if attrs['type'] in ('lft', 'rgt'):
-		parseCurve( parseSegmentAttributes(segment) )
-	elif attrs['type'] == 'str':
-		parseStraight( parseSegmentAttributes(segment) )
-	else:
-		logger.warn('I don\'t understand the segment type "%s"' % attrs['type'])
-
-
-def parseSegmentAttributes(segment):
-	attrs = {}
-
-	if type(segment['attstr']) is list:
-		for attr in segment['attstr']:
-			attrs[attr['@name']] = attr['@val']
-	else:
-		attr = segment['attstr']
-		attrs[attr['@name']] = attr['@val']
-
-	if type(segment['attnum']) is list:
-		for attr in segment['attnum']:
-			attrs[attr['@name']] = attr['@val']
-	else:
-		attr = segment['attnum']
-		attrs[attr['@name']] = attr['@val']
-
-	return attrs
-
-
-def parseCurve(attrs):
-	global directionDegree
-	logger = logging.getLogger('trackparser')
-	center = None
-
-	radiusX = float(attrs['radius'])
-
-	if(attrs.has_key('end radius')):
-		radiusY = float(attrs['end radius'])
-	else:
-		radiusY = radiusX
-
-	arc = float(attrs['arc'])
-
-	startPoint = nodes[-1]
-	rotationDirection = 1 if attrs['type'] == 'lft' else -1;
-	lastDirection = (
-		np.cos(np.radians(directionDegree)),
-		np.sin(np.radians(directionDegree))
-	)
-
-
-	if attrs['type'] == 'lft':
-		center = Point(
-			startPoint[0] - lastDirection[1] * radiusX,
-			startPoint[1] + lastDirection[0] * radiusY
-		)
-	elif attrs['type'] == 'rgt':
-		center = Point(
-			startPoint[0] + lastDirection[1] * radiusX,
-			startPoint[1] - lastDirection[0] * radiusY
-		)
-	else:
-		logger.warn('Wrong direction')
-
-
-	logger.debug('Curve: center %s, radius %s, %s, arc %s' % (center, radiusX, radiusY, arc))
-	helpNodes.append(center)
-
-
-	curveNodes = sampleEllipse(center, radiusX, radiusY, arc, degreeStepSize)
-
-	if attrs['type'] == 'rgt':
-		curveNodes = [ flipHorizontally(node, center.x) for node in curveNodes ]
-
-	curveNodes = [ rotatePoint(center, node, directionDegree-90) for node in curveNodes ]
-
-	if attrs['type'] == 'lft':
-		# rotate left
-		directionDegree = (directionDegree + arc) % 360
-	elif attrs['type'] == 'rgt':
-		# rotate right
-		directionDegree = (directionDegree - arc) % 360
-
-	nodes.extend(curveNodes)
-
-
-def parseStraight(attrs):
-	logger = logging.getLogger('trackparser')
-	logger.debug('Straight: length %s' % (float(attrs['lg']),))
-	lastDirection = (
-		np.cos(np.radians(directionDegree)),
-		np.sin(np.radians(directionDegree))
-	)
-	newNode = (
-		nodes[-1][0] + lastDirection[0] * float(attrs['lg']),
-		nodes[-1][1] + lastDirection[1] * float(attrs['lg'])
-	)
-	nodes.append(newNode)
-
-def findByName(maybeList, name):
-	result = None
-	elementList = None
-
-	if type(maybeList) is list:
-		elementList = maybeList
-	else:
-		elementList = [maybeList]
-
-	for element in elementList:
-		if element['@name'] == name:
-			result = element
-			break
-
-	return result
-
-
-def parseTrack():
-	logger = logging.getLogger('trackparser')
-	track = findByName(trackXml['params']['section'], 'Main Track')
-	global nodes
-
-	if track is None:
-		logger.error( "Couldn't find Main Track" )
-		sys.exit(1)
-	else:
-		logger.info( "Main Track found")
-
-	segments = findByName(track['section'], 'Track Segments')
-
-	if segments is None:
-		logger.error( "Couldn't find Track Segments" )
-		sys.exit(1)
-	else:
-		logger.info( "Track Segments found")
-
-	for segment in segments['section']:
-		parseSegment(segment)
-
-	# remove last node to create a better connection to the start node
-	nodes = nodes[:-1]
-
 
 def writeNodes(filePrefix):
 	with open(filePrefix + '.nod.xml', 'w') as fd:
@@ -297,7 +104,6 @@ def sumo(filePrefix, sumoCommand):
 
 def showPoints():
 	plt.scatter(*zip(*nodes))
-	#plt.scatter(*zip(*helpNodes), color='r')
 	plt.scatter(*nodes[0], color='g')
 	plt.plot(*zip(*nodes + [ nodes[0] ]))
 
